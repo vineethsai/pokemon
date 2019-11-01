@@ -16,7 +16,7 @@ const small_msm = {
     marginLeft: 80
 }
 
-
+// load svgs
 window.onload = function () {
     svgContainer = d3.select("#chart")
         .append('svg')
@@ -35,12 +35,13 @@ window.onload = function () {
     .then((d) => makeScatterPlot(d))
 }
 
+// main function
 function makeScatterPlot(data) {
-console.log("hello");
+
 let def = data.map((row) => parseInt(row["Sp. Def"]));
 let total = data.map((row) =>  parseFloat(row["Total"]));
 
-
+// drop down for the 2 filters
 let dropDownG = d3.select("#filter").append("select")
     .attr("name", "Generation");
 
@@ -48,22 +49,26 @@ let dropDownL = d3.select("#Legendfilter").append("select")
     .attr("name", "Legendary");
 
 const axesLimits = findMinMax(def, total);
-console.log(axesLimits);
+
+// draw axes
 let mapFunctions = drawAxes(axesLimits, "Sp. Def", "Total", svgContainer, msm);
 
+// plot data
 plotData(mapFunctions, data);
 
 // draw title and axes labels
 makeLabels(svgContainer, msm, "Pokemon: Special Defense vs Total Stats", 'Sp. Def', 'Total');
 
+
+// filtering variables
 let generation = [...new Set(data.map(d => d["Generation"]))];
 generation.push("All");
 
 let legendary = [...new Set(data.map(d => d["Legendary"]))];
 legendary.push("All");
-console.log(legendary);
 let defaultGeneration = 1;
 
+// filtering options
 let Goptions = dropDownG.selectAll("option")
     .data(generation)
     .enter()
@@ -80,31 +85,30 @@ let Loptions = dropDownL.selectAll("option")
     .attr("value", function (d) { return d; })
     .attr("selected", function(d){ return d == "True"; });
 
+// filtering functions for Generation and Legendary
 
-var currL = "All";
-var currG = "All";
+    var currL = "All";
+    var currG = "All";
 
-dropDownG.on("change", function() {
-    currG = this.value;
-    showCirclesG(this, data, currL);
-});
+    dropDownG.on("change", function() {
+        currG = this.value;
+        showCirclesG(this, data, currL);
+    });
 
-
-
-dropDownL.on("change", function() {
-    currL = this.value;
-    showCirclesL(this, data, currG);
-});
-
-
+    dropDownL.on("change", function() {
+        currL = this.value;
+        showCirclesL(this, data, currG);
+    });
 
 }
 
+// Generation filtering
 function showCirclesG(me, data, currL) {
     let selected = me.value;
     displayOthers = me.checked ? "inline" : "none";
     display = me.checked ? "none" : "inline";
-    console.log(selected, currL);
+
+    // remove non selected
     svgContainer.selectAll(".circles")
         .data(data)
         .filter(function(d) {
@@ -117,6 +121,7 @@ function showCirclesG(me, data, currL) {
         })
         .attr("display", displayOthers);
         
+    // show selected
     svgContainer.selectAll(".circles")
         .data(data)
         .filter(function(d) {
@@ -129,6 +134,7 @@ function showCirclesG(me, data, currL) {
         })
         .attr("display", display);
 
+    // show all
     if(selected == "All" && currL != "All") 
     {
         svgContainer.selectAll(".circles")
@@ -144,14 +150,18 @@ function showCirclesG(me, data, currL) {
     }
 }
 
+// filterinig Legendary
 function showCirclesL(me, data, currG) {
-    console.log(me.value, currG);
     let selected = me.value;
     displayOthers = me.checked ? "inline" : "none";
     display = me.checked ? "none" : "inline";
+    
+    // Initially show all
     svgContainer.selectAll(".circles")
         .data(data)
         .attr("display", display);
+
+    // remove unselected
     svgContainer.selectAll(".circles")
         .data(data)
         .filter(function(d) {
@@ -165,6 +175,7 @@ function showCirclesL(me, data, currG) {
         })
         .attr("display", displayOthers);
         
+    // show selected
     svgContainer.selectAll(".circles")
         .data(data)
         .filter(function(d) {
@@ -174,6 +185,8 @@ function showCirclesL(me, data, currG) {
             return selected == d["Legendary"];
         })
         .attr("display", display);
+
+    // show all
     if(selected == "All" && currG != "All") 
     {
         svgContainer.selectAll(".circles")
@@ -191,23 +204,22 @@ function showCirclesL(me, data, currG) {
     }
 }
 
+// plot data
 function plotData(map, data) {
-    // get population data as array
-
+    
+    // get data as array
     let pop_data = data.map((row) => +row["Sp. Def"]);
     let pop_limits = d3.extent(pop_data);
-    // make size scaling function for population
-
-
     let type1 = data.map((row) => row["Type 1"]);
-    console.log(type1);
+
+    // colors for the scatter plot
     var color = d3.scaleOrdinal()
     .domain(Array.from(new Set(type1)))
     .range([ "#4E79A7", "#A0CBE8", "#F28E2B", "#FFBE&D", "#59A14F", "#8CD17D", "#B6992D", "#499894"
     , "#86BCB6", "#86BCB7", "#E15759", "#FF9D9A", "#79706E", "#BAB0AC", "#D37295"]);
 
-
-
+    // show legend
+    // Draw legend circles
     legendContainer.selectAll("mydots")
     .data(Array.from(new Set(type1)))
     .enter()
@@ -217,6 +229,7 @@ function plotData(map, data) {
         .attr("r", 7)
         .style("fill", function(d){ return color(d)});
 
+    // legend text
     legendContainer.selectAll("mylabels")
     .data(Array.from(new Set(type1)))
     .enter()
@@ -228,11 +241,9 @@ function plotData(map, data) {
     .attr("text-anchor", "left")
     .style("alignment-baseline", "middle")
 
-    console.log(color);
     // mapping functions
     let xMap = map.x;
     let yMap = map.y;
-    console.log("xMap");
 
     let div = d3.select("body").append("div")
         .attr("class", "tooltip")
@@ -275,25 +286,27 @@ function plotData(map, data) {
         });
 }
 
+// makes lables
 function makeLabels(svgContainer, msm, title, x, y) {
-svgContainer.append('text')
-    .attr('x', (msm.width - 2 * msm.marginAll) / 2 - 90)
-    .attr('y', msm.marginAll / 2 + 10)
-    .style('font-size', '10pt')
-    .text(title);
+    svgContainer.append('text')
+        .attr('x', (msm.width - 2 * msm.marginAll) / 2 - 90)
+        .attr('y', msm.marginAll / 2 + 10)
+        .style('font-size', '10pt')
+        .text(title);
 
-svgContainer.append('text')
-    .attr('x', (msm.width - 2 * msm.marginAll) / 2 - 30)
-    .attr('y', msm.height - 10)
-    .style('font-size', '10pt')
-    .text(x);
+    svgContainer.append('text')
+        .attr('x', (msm.width - 2 * msm.marginAll) / 2 - 30)
+        .attr('y', msm.height - 10)
+        .style('font-size', '10pt')
+        .text(x);
 
-svgContainer.append('text')
-    .attr('transform', 'translate( 15,' + (msm.height / 2 + 30) + ') rotate(-90)')
-    .style('font-size', '10pt')
-    .text(y);
+    svgContainer.append('text')
+        .attr('transform', 'translate( 15,' + (msm.height / 2 + 30) + ') rotate(-90)')
+        .style('font-size', '10pt')
+        .text(y);
 }
 
+// draws axes
 function drawAxes(limits, x, y, svgContainer, msm) {
     // return x value from a row of data
     let xValue = function (d) {
@@ -347,6 +360,7 @@ function drawAxes(limits, x, y, svgContainer, msm) {
     };
 }
 
+// finds the min and max
 function findMinMax(def, total) {
     return {
         defMin: d3.min(def),
